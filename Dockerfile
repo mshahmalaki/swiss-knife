@@ -9,7 +9,7 @@ ARG TARGETARCH
 ARG YQ_VERSION
 
 RUN apk -U upgrade \
-    && apk add --no-cache ca-certificates bash git openssh curl gettext jq unzip \
+    && apk add --no-cache bash build-base ca-certificates curl gettext git jq openssh python3 python3-dev py3-pip unzip \
     && wget -q https://storage.googleapis.com/kubernetes-release/release/v${KUBE_VERSION}/bin/${TARGETOS}/${TARGETARCH}/kubectl -O /usr/local/bin/kubectl \
     && wget -q https://get.helm.sh/helm-v${HELM_VERSION}-${TARGETOS}-${TARGETARCH}.tar.gz -O - | tar -xzO ${TARGETOS}-${TARGETARCH}/helm > /usr/local/bin/helm \
     && wget -q https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${TARGETOS}_${TARGETARCH} -O /usr/local/bin/yq \
@@ -25,9 +25,8 @@ RUN apk -U upgrade \
 
 RUN helm plugin install https://github.com/chartmuseum/helm-push
 
-RUN apk add python3
-RUN apk add --update py3-pip
 RUN pip install --upgrade pip
+RUN pip install --upgrade setuptools
 RUN pip install docker-compose-templer
 
 WORKDIR /config
