@@ -27,6 +27,8 @@ RUN helm plugin install https://github.com/chartmuseum/helm-push
 
 RUN apk add python3
 RUN apk add --update py3-pip
+RUN pip install --upgrade pip
+RUN pip install docker-compose-templer
 
 WORKDIR /config
 
