@@ -6,7 +6,7 @@
 
 Supported tags and release links
 
-## [1.1.2](https://github.com/mshahmalaki/swiss-knife/releases/tag/1.1.0)
+## [1.1.2](https://github.com/mshahmalaki/swiss-knife/releases/tag/1.1.2)
 
 * helm v3.10.0
 * kubectl v1.25.2
