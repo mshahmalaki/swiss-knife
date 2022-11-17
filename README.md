@@ -4,16 +4,16 @@
 [![Docker Stars](https://img.shields.io/docker/stars/mshahmalaki/swiss-knife.svg?style=flat)](https://hub.docker.com/r/mshahmalaki/swiss-knife/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/mshahmalaki/swiss-knife.svg?style=flat)](https://hub.docker.com/r/mshahmalaki/swiss-knife/)
 
-Supported tags and release links
 
-## [1.1.2](https://github.com/mshahmalaki/swiss-knife/releases/tag/1.1.2)
+## [v1.1.2](https://github.com/mshahmalaki/swiss-knife/releases/tag/1.1.2)
 
 * helm v3.10.0
 * kubectl v1.25.2
-* alpine 3.16
-* terraform 1.3.0
-* docker-compose-templer 1.1.0
-* jinja 3.1.2
+* alpine v3.16
+* terraform v1.3.0
+* yq v4.27.5
+* docker-compose-templer v1.1.0
+* jinja v3.1.2
 
 
 ## Overview
