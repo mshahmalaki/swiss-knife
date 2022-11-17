@@ -6,8 +6,15 @@
 
 Supported tags and release links
 
-* [1.1.0](https://github.com/mshahmalaki/swiss-knife/releases/tag/1.1.0) - helm v3.10.0, kubectl v1.25.2, alpine 3.16, terraform 1.3.0
-* [1.0.0](https://github.com/mshahmalaki/swiss-knife/releases/tag/1.0.0) - helm v3.10.0, kubectl v1.25.2, alpine 3.16
+## [1.1.2](https://github.com/mshahmalaki/swiss-knife/releases/tag/1.1.0)
+
+* helm v3.10.0
+* kubectl v1.25.2
+* alpine 3.16
+* terraform 1.3.0
+* docker-compose-templer 1.1.0
+* jinja 3.1.2
+
 
 ## Overview
 
