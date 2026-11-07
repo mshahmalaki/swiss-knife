@@ -10,64 +10,93 @@ on:
   workflow_dispatch:
   release:
     types: [published, edited]
+  # Rebuild weekly so the image picks up new tool releases automatically.
+  schedule:
+    - cron: '0 3 * * 1'
 
 jobs:
   build-and-push-images:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       -
         name: Checkout
-        uses: actions/checkout@v3
-      - 
-        name: Read environment file
-        run: cat .env >> ${GITHUB_ENV}
+        uses: actions/checkout@v4
+      -
+        name: Resolve latest tool versions
+        id: versions
+        run: |
+          # Optional pins from .env (uncommented lines only) take precedence.
+          set -a; . ./.env; set +a
+          ./scripts/versions.sh | tee versions.txt
+          if [ -n "${ALPINE_EDGE_PACKAGES+set}" ]; then
+            echo "ALPINE_EDGE_PACKAGES=${ALPINE_EDGE_PACKAGES}" | tee -a versions.txt
+          fi
+          cat versions.txt >> "$GITHUB_ENV"
+          {
+            echo 'build-args<<EOF'
+            cat versions.txt
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo '### Tool versions'
+            echo '```'
+            cat versions.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       -
         name: Docker meta
         id: meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: |
-            mshahmalaki/swiss-knife
-            ghcr.io/mshahmalaki/swiss-knife
+            hesamyavari/swiss-knife
+            ghcr.io/hesamyavari/swiss-knife
           tags: |
-            type=raw,value=latest,enable=${{ endsWith(github.ref, github.event.repository.default_branch) }}
+            type=raw,value=latest,enable={{is_default_branch}}
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}
             type=semver,pattern={{major}}.{{minor}}
-      - 
+            type=schedule,pattern={{date 'YYYYMMDD'}}
+          labels: |
+            io.swiss-knife.kubectl=${{ env.KUBE_VERSION }}
+            io.swiss-knife.helm=${{ env.HELM_VERSION }}
+            io.swiss-knife.terraform=${{ env.TERRAFORM_VERSION }}
+            io.swiss-knife.yq=${{ env.YQ_VERSION }}
+      -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
       -
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v2 
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       -
         name: Login to GitHub Container Registry
         if: github.event_name != 'pull_request'
-        uses: docker/login-action@v2 
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       -
         name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: .
+          pull: true
+          no-cache: true
           push: ${{ github.event_name != 'pull_request' }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v7
-          build-args: |
-            KUBE_VERSION=${{ env.KUBE_VERSION }}
-            HELM_VERSION=${{ env.HELM_VERSION }}
-            TERRAFORM_VERSION=${{ env.TERRAFORM_VERSION }}
-            YQ_VERSION=${{ env.YQ_VERSION }}
+          platforms: linux/amd64,linux/arm64
+          build-args: ${{ steps.versions.outputs.build-args }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
