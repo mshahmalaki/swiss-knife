@@ -1,0 +1,5 @@
+# BuildKit config for the local "swiss-knife" builder (see Makefile).
+# Building kubectl/terraform from source for several platforms at once can
+# exhaust Docker Desktop memory; cap concurrent build steps.
+[worker.oci]
+  max-parallelism = 2
