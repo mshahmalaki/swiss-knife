@@ -94,7 +94,7 @@ RUN : "${KUBE_VERSION:?build with 'make docker_build' or pass --build-arg KUBE_V
 
 RUN apk -U upgrade \
     && apk add --no-cache bash ca-certificates curl gettext-envsubst git jq openssh-client python3 \
-        mtr tcpdump iproute2 vim \
+        mtr tcpdump iproute2 vim tini \
     && if [ -n "${ALPINE_EDGE_PACKAGES}" ]; then \
          echo "@edge https://dl-cdn.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories \
          && apk add --no-cache $(printf '%s@edge ' ${ALPINE_EDGE_PACKAGES}); \
@@ -138,4 +138,9 @@ RUN printf '%s\n' \
 
 WORKDIR /config
 
-CMD ["bash"]
+# Long-running by default so the image can live as a Pod/Deployment in
+# Kubernetes and be used via `kubectl exec -it <pod> -- bash`.
+# tini (PID 1) forwards signals and reaps zombies, so the pod stops instantly.
+# Override the command for one-off use: docker run --rm -it <image> bash
+ENTRYPOINT ["/sbin/tini", "--"]
+CMD ["sleep", "infinity"]

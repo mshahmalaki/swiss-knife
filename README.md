@@ -36,14 +36,34 @@ This lightweight alpine docker image provides kubectl and helm binaries for work
 If it is desired to only use kubectl and have kubectl as the entry command (versus this image as bash entry command), I recommend checking out this image instead:
 [lachlanevenson/kubectl](https://hub.docker.com/r/lachlanevenson/k8s-kubectl/)
 
-## Run
+## Run in Kubernetes
+
+The image's default command is `sleep infinity` (under `tini`), so it stays running as a pod
+and you `exec` into it to use the tools:
+
+```sh
+kubectl apply -f https://raw.githubusercontent.com/hesamyavari/swiss-knife/main/k8s/swiss-knife.yaml
+kubectl -n swiss-knife exec -it deploy/swiss-knife -- bash
+kubectl -n swiss-knife exec deploy/swiss-knife -- helm list -A
+```
+
+[k8s/swiss-knife.yaml](k8s/swiss-knife.yaml) creates a `swiss-knife` namespace, a ServiceAccount
+bound to the read-only `view` ClusterRole (so `kubectl`/`helm` inside the pod work without a
+kubeconfig), and a Deployment with `NET_ADMIN`/`NET_RAW` for `tcpdump` and `mtr`.
+Change the ClusterRole to `edit` or `cluster-admin` if you need write access.
+
+Quick one-off pod instead:
+`kubectl run swiss-knife --image=hesamyavari/swiss-knife` then `kubectl exec -it swiss-knife -- bash`
+
+## Run with Docker
 
 Example to just run helm on entry:  
 `docker run --rm hesamyavari/swiss-knife helm`
 By default kubectl will try to use /root/.kube/config file for connection to the kubernetes cluster, but does not exist by default in the image.
 
-Example for use with personal administration or troubleshooting with volume mount for kubeconfig files:  
-`docker run -it -v ~/.kube:/root/.kube hesamyavari/swiss-knife`
+Example for use with personal administration or troubleshooting with volume mount for kubeconfig files
+(pass `bash`, since the default command just sleeps):  
+`docker run -it -v ~/.kube:/root/.kube hesamyavari/swiss-knife bash`
 The -v maps your host docker machine Kubernetes configuration directory (~/.kube) to the container's Kubernetes configuration directory (root/.kube).
 
 ## Build

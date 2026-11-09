@@ -1,0 +1,75 @@
+# Long-running swiss-knife toolbox pod.
+#   kubectl apply -f k8s/swiss-knife.yaml
+#   kubectl -n swiss-knife exec -it deploy/swiss-knife -- bash
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: swiss-knife
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: swiss-knife
+  namespace: swiss-knife
+---
+# kubectl/helm inside the pod use this ServiceAccount automatically.
+# Read-only across the cluster; swap "view" for "edit" or "cluster-admin"
+# if you need to change resources from inside the pod.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: swiss-knife-view
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: view
+subjects:
+  - kind: ServiceAccount
+    name: swiss-knife
+    namespace: swiss-knife
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: swiss-knife
+  namespace: swiss-knife
+  labels:
+    app: swiss-knife
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: swiss-knife
+  template:
+    metadata:
+      labels:
+        app: swiss-knife
+    spec:
+      serviceAccountName: swiss-knife
+      terminationGracePeriodSeconds: 5
+      containers:
+        - name: swiss-knife
+          image: hesamyavari/swiss-knife:latest
+          imagePullPolicy: Always
+          # Image default is `sleep infinity` under tini; stated here for clarity.
+          command: ["/sbin/tini", "--"]
+          args: ["sleep", "infinity"]
+          stdin: true
+          tty: true
+          securityContext:
+            capabilities:
+              # tcpdump and mtr need raw sockets
+              add: ["NET_ADMIN", "NET_RAW"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          volumeMounts:
+            - name: workspace
+              mountPath: /config
+      volumes:
+        - name: workspace
+          emptyDir: {}
